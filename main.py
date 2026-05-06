@@ -14,6 +14,10 @@ from src.ai_analyzer import AIAnalyzer
 from src.virustotal import VirusTotalAnalyzer
 from src.excel_manager import ExcelManager
 from src.email_sender import EmailSender
+from src.tenable_client import TenableClient, format_tenable_comment
+from src.nvd_client import NVDClient
+from src.wappalyzer_scanner import WappalyzerScanner
+from src.impact_correlator import ImpactCorrelator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -78,6 +82,31 @@ def main():
     # Using Groq as requested
     ai_analyzer = AIAnalyzer(api_key=os.getenv("GROQ_API_KEY"))
     vt_analyzer = VirusTotalAnalyzer(api_key=os.getenv("VT_API_KEY"))
+
+    tenable_client = None
+    if os.getenv("TENABLE_ACCESS_KEY") and os.getenv("TENABLE_SECRET_KEY"):
+        tenable_client = TenableClient(
+            access_key=os.getenv("TENABLE_ACCESS_KEY"),
+            secret_key=os.getenv("TENABLE_SECRET_KEY"),
+        )
+        logging.info("Tenable client initialized.")
+
+    # NVD + Wappalyzer + Correlator setup
+    nvd_client = NVDClient(api_key=os.getenv("NVD_API_KEY"))
+    wapp_scanner = WappalyzerScanner(timeout=int(os.getenv("WAPP_TIMEOUT", 30)))
+
+    # Seed tech inventory: Tenable assets + any manually configured URLs
+    extra_urls = [u.strip() for u in os.getenv("WAPP_EXTRA_URLS", "").split(",") if u.strip()]
+    if tenable_client and wapp_scanner.is_available():
+        asset_urls = tenable_client.get_asset_urls()
+        all_urls = list(dict.fromkeys(asset_urls + extra_urls))
+        if all_urls:
+            logging.info(f"Scanning {len(all_urls)} asset(s) with Wappalyzer (cached results reused)...")
+            wapp_scanner.scan_many(all_urls)
+    elif extra_urls and wapp_scanner.is_available():
+        wapp_scanner.scan_many(extra_urls)
+
+    correlator = ImpactCorrelator(wapp_scanner.get_inventory())
     
     report_path = os.path.join(BULLETINS_DIR, "Informe_Amenazas.xlsx")
     excel_manager = ExcelManager(output_path=report_path)
@@ -141,7 +170,50 @@ def main():
             logging.info(f"Querying VirusTotal for {len(iocs)} IOCs...")
             vt_results = vt_analyzer.check_iocs(iocs)
             threat_data["vt_results"] = vt_results
-        
+
+        # 4. Query Tenable for CVEs found in this bulletin
+        tenable_result = None
+        if tenable_client:
+            logging.info("Querying Tenable for CVEs in bulletin...")
+            try:
+                tenable_result = tenable_client.check_bulletin(text)
+                threat_data["soc_comments"] = format_tenable_comment(tenable_result)
+                if tenable_result.get("affected"):
+                    logging.info(f"Tenable: {len(tenable_result['affected'])} CVE(s) afectan la empresa → {tenable_result['affected']}")
+                else:
+                    logging.info("Tenable: Ningún CVE del boletín afecta activos de la empresa.")
+            except Exception as e:
+                logging.error(f"[Tenable] Unexpected error: {e}")
+                threat_data["soc_comments"] = "[TENABLE] Error al consultar la API."
+
+        # 5. Web tech impact via NVD + Wappalyzer
+        cves_in_text = sorted(set(re.findall(r'CVE-\d{4}-\d{4,7}', text, re.I)))
+        all_cves = list(dict.fromkeys([c.upper() for c in cves_in_text]))
+
+        if all_cves and wapp_scanner.get_inventory():
+            logging.info(f"Querying NVD for {len(all_cves)} CVE(s) to assess web tech impact...")
+            cve_products_map = {}
+            for cve in all_cves:
+                products = nvd_client.get_cve_products(cve)
+                if products:
+                    cve_products_map[cve] = products
+
+            if cve_products_map:
+                # Rebuild correlator with current inventory (it may have grown)
+                correlator = ImpactCorrelator(wapp_scanner.get_inventory())
+                web_correlations = correlator.correlate_many(cve_products_map)
+                web_report = correlator.format_report(web_correlations)
+                # Append web impact to the soc_comments
+                existing = threat_data.get("soc_comments", "")
+                threat_data["soc_comments"] = (existing + "\n\n" + web_report).strip()
+                affected_by_web = [r["cve"] for r in web_correlations.values() if r["impacted_urls"]]
+                if affected_by_web:
+                    logging.info(f"[WebTech] {len(affected_by_web)} CVE(s) impactan activos web: {affected_by_web}")
+                else:
+                    logging.info("[WebTech] Ningún CVE afecta tecnologías web detectadas en el inventario.")
+        elif all_cves and not wapp_scanner.get_inventory():
+            logging.info("[WebTech] Inventario de tecnologías vacío. Instala wappalyzer o configura WAPP_EXTRA_URLS.")
+
         reports.append(threat_data)
         excel_manager.add_record(threat_data)
         time.sleep(8)  # Evitar rate limit de Groq (12k TPM)

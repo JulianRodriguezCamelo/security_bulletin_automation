@@ -4,5 +4,13 @@ requests==2.31.0
 openpyxl==3.1.2
 pandas==2.2.1
 PyPDF2==3.0.1
-windows-toasts
-edge-tts
+wappalyzer
+
+# Web app
+streamlit>=1.35.0
+streamlit-authenticator>=0.3.0,<0.4.0
+bcrypt>=4.0.0
+PyYAML>=6.0
+
+# NOTE: windows-toasts and edge-tts are only needed to run main.py locally on Windows.
+# Install them manually if you use the CLI: pip install windows-toasts edge-tts

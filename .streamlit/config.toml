@@ -1,0 +1,16 @@
+[server]
+# Block cross-origin requests (critical when exposed to internet)
+enableCORS = false
+# CSRF token required on every form submission
+enableXsrfProtection = true
+# Hard limit on file upload size (MB) — also enforced in app.py
+maxUploadSize = 20
+# Don't expose server info in response headers
+headersToHide = ["X-Powered-By"]
+
+[browser]
+# Don't send usage data to Streamlit/Snowflake
+gatherUsageStats = false
+
+[theme]
+base = "dark"
