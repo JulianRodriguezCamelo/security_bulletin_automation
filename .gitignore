@@ -1,10 +1,5 @@
 # Credentials and secrets
 .env
-auth_config.yaml
-.streamlit/secrets.toml
-
-# Security audit trail (stays local, not in repo)
-security_audit.log
 
 # Python cache
 __pycache__/

@@ -43,7 +43,7 @@ class TenableClient:
                 fqdns = asset.get("fqdn", []) or asset.get("hostname", [])
                 for fqdn in fqdns:
                     fqdn = fqdn.strip()
-                    if fqdn:
+                    if fqdn and self._is_valid_fqdn(fqdn):
                         urls.append(f"https://{fqdn}")
                         break  # one URL per asset is enough
             logger.info(f"[Tenable] {len(urls)} asset URL(s) fetched from inventory")
@@ -104,6 +104,22 @@ class TenableClient:
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
+    @staticmethod
+    def _is_valid_fqdn(hostname: str) -> bool:
+        """Return True only for hostnames that look like real web-facing FQDNs.
+
+        Filters out Tenable scanner agents (e.g. tenable-uv2tdz1x) and bare
+        single-label hostnames that can't be reached as HTTPS endpoints.
+        """
+        # Must contain at least one dot → real domain (e.g. server.company.com)
+        if "." not in hostname:
+            return False
+        # Skip bare IP addresses — HTTPS scanning rarely works on raw IPs
+        ip_pattern = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
+        if ip_pattern.match(hostname):
+            return False
+        return True
+
     def _extract_cves(self, text: str) -> list[str]:
         return sorted(set(m.upper() for m in CVE_PATTERN.findall(text)))
 
@@ -114,7 +130,7 @@ class TenableClient:
             "date_range": self.DATE_RANGE,
             "filter.search_type": "and",
             "filter.0.filter": "plugin.attributes.cve",
-            "filter.0.quality": "eq",
+            "filter.0.quality": "match",
             "filter.0.value": cve,
         }
         try:

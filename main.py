@@ -90,6 +90,8 @@ def main():
             secret_key=os.getenv("TENABLE_SECRET_KEY"),
         )
         logging.info("Tenable client initialized.")
+    else:
+        logging.warning("[Tenable] TENABLE_ACCESS_KEY o TENABLE_SECRET_KEY no configurados — análisis de activos deshabilitado.")
 
     # NVD + Wappalyzer + Correlator setup
     nvd_client = NVDClient(api_key=os.getenv("NVD_API_KEY"))
