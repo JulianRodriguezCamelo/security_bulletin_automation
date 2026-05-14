@@ -1,0 +1,16 @@
+services:
+  argos:
+    build: .
+    container_name: argos
+    ports:
+      - "5003:5003"
+    env_file:
+      - .env
+    volumes:
+      - ./users.yaml:/app/users.yaml
+      - ./data:/app/data
+      - argos_documents:/root/Documents/Casos_inteligencia_de_amenazas
+    restart: unless-stopped
+
+volumes:
+  argos_documents:

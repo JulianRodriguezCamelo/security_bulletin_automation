@@ -1,0 +1,9 @@
+# users.yaml — generado automáticamente al crear el primer usuario desde la web app
+# NO compartas este archivo (está en .gitignore)
+#
+# Estructura interna (no editar manualmente):
+#
+# users:
+#   nombre_usuario:
+#     password_hash: "$2b$12$..."   # bcrypt hash
+#     totp_secret: "BASE32SECRET"   # clave TOTP (Google Authenticator / Authy)

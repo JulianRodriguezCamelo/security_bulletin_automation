@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #F7F0EC; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  #root { min-height: 100vh; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-br from-brand-500 to-brand-700 text-white font-semibold rounded-xl px-5 py-2.5 text-sm shadow-sm transition-all hover:from-brand-600 hover:to-brand-700 hover:shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-surface text-brand-700 border border-brand-300 font-semibold rounded-xl px-5 py-2.5 text-sm transition-all hover:border-brand-500 hover:text-brand-500 hover:bg-brand-50 active:scale-95;
+  }
+  .card {
+    @apply bg-surface border border-brand-300 rounded-2xl shadow-card;
+  }
+  .input {
+    @apply w-full bg-surface border border-brand-300 rounded-xl px-4 py-2.5 text-sm text-[#1C0A0F] placeholder-brand-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #F7F0EC; }
+::-webkit-scrollbar-thumb { background: #E0CDD3; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #C1294A; }
+
+/* SSE log terminal */
+.log-terminal {
+  background: #1C0A0F;
+  border: 1px solid #3D1020;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #FFB8C6;
+  max-height: 320px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
