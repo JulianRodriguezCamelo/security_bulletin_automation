@@ -1,4 +1,4 @@
-type Page = 'upload' | 'archive' | 'config'
+type Page = 'dashboard' | 'upload' | 'archive' | 'config'
 
 interface Props {
   page:      Page
@@ -9,9 +9,10 @@ interface Props {
 }
 
 const TABS: { id: Page; icon: string; label: string }[] = [
-  { id: 'upload',  icon: '📤', label: 'Procesar'      },
-  { id: 'archive', icon: '📊', label: 'Historial'     },
-  { id: 'config',  icon: '⚙️', label: 'Configuración' },
+  { id: 'dashboard', icon: '🏠', label: 'Dashboard'     },
+  { id: 'upload',    icon: '📤', label: 'Procesar'      },
+  { id: 'archive',   icon: '📊', label: 'Historial'     },
+  { id: 'config',    icon: '⚙️', label: 'Configuración' },
 ]
 
 export default function Navbar({ page, setPage, user, onLogout, pending }: Props) {

@@ -250,6 +250,122 @@ def download_excel():
     return send_file(EXCEL_PATH, as_attachment=True, download_name="Informe_Amenazas.xlsx")
 
 
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+import re as _re
+
+_MESES = {
+    'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
+    'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
+    'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12',
+}
+
+def _parse_es_month(s: str):
+    m = _re.search(r'\d+\s+de\s+(\w+)\s+de\s+(\d{4})', str(s).lower())
+    if m:
+        month = _MESES.get(m.group(1))
+        if month:
+            return f"{m.group(2)}-{month}"
+    return None
+
+_MACRO_MAP = [
+    ('Vulnerabilidad',  ['vulnerabilid']),
+    ('Malware',         ['malware', 'ransomware', 'troyano', 'trojan', 'rat ', 'rat(', 'infostealer', 'backdoor', 'lofystealer', 'stealer', 'botn']),
+    ('Phishing',        ['phishing']),
+    ('APT',             ['apt']),
+    ('Campaña',         ['campa', 'espionaje']),
+    ('Poisoning',       ['poisoning', 'envenenamiento']),
+    ('Compromiso',      ['compromiso']),
+    ('Explotación',     ['explotaci', 'exploit']),
+]
+
+def _macro_type(val: str) -> str:
+    v = val.lower()
+    for label, keywords in _MACRO_MAP:
+        if any(k in v for k in keywords):
+            return label
+    return 'Otro'
+
+
+@app.route("/api/dashboard", methods=["GET"])
+@require_auth
+def dashboard():
+    result = {
+        "threats": {
+            "total": 0, "active": 0,
+            "by_category": {},   # Vulnerabilidad / Amenaza column
+            "by_macro": {},      # Tipo de Amenaza grouped into macro categories
+            "by_status": {},
+            "by_month": {},
+            "company_impact": 0,
+        },
+        "iocs": {"total": 0, "by_type": {}},
+    }
+    if not EXCEL_PATH.exists():
+        return jsonify(result)
+
+    try:
+        df_t = pd.read_excel(EXCEL_PATH, sheet_name="Registro de Amenazas", engine="openpyxl")
+        result["threats"]["total"] = len(df_t)
+
+        # "Vulnerabilidad / Amenaza" → clean category donut
+        cat_col = next((c for c in df_t.columns if "vulnerabilidad" in c.lower() and "amenaza" in c.lower()), None)
+        if cat_col:
+            result["threats"]["by_category"] = {
+                str(k): int(v) for k, v in df_t[cat_col].value_counts().items()
+            }
+
+        # "Tipo de Amenaza" → grouped macro-categories bar chart
+        tipo_col = next((c for c in df_t.columns if c.lower().startswith("tipo")), None)
+        if tipo_col:
+            macros: dict[str, int] = {}
+            for val in df_t[tipo_col].dropna().astype(str):
+                key = _macro_type(val)
+                macros[key] = macros.get(key, 0) + 1
+            result["threats"]["by_macro"] = dict(sorted(macros.items(), key=lambda x: -x[1]))
+
+        # Estado
+        status_col = next((c for c in df_t.columns if c.lower() == "estado"), None)
+        if status_col:
+            result["threats"]["by_status"] = {
+                str(k): int(v) for k, v in df_t[status_col].value_counts().items()
+            }
+            result["threats"]["active"] = int(
+                df_t[status_col].astype(str).str.lower().str.contains("activ", na=False).sum()
+            )
+
+        # Fecha en español → YYYY-MM
+        date_col = next((c for c in df_t.columns if "fecha" in c.lower()), None)
+        if date_col:
+            months: dict[str, int] = {}
+            for val in df_t[date_col].dropna().astype(str):
+                ym = _parse_es_month(val)
+                if ym:
+                    months[ym] = months.get(ym, 0) + 1
+            result["threats"]["by_month"] = dict(sorted(months.items()))
+
+        # Impacto empresa
+        impact_col = next((c for c in df_t.columns if "impacto" in c.lower() or "posible" in c.lower()), None)
+        if impact_col:
+            result["threats"]["company_impact"] = int(
+                df_t[impact_col].astype(str).str.upper().str.strip().eq("SI").sum()
+            )
+    except Exception:
+        pass
+
+    try:
+        df_i = pd.read_excel(EXCEL_PATH, sheet_name="Detalle de IoCs", engine="openpyxl")
+        result["iocs"]["total"] = len(df_i)
+        tipo_col = next((c for c in df_i.columns if "tipo" in c.lower()), None)
+        if tipo_col:
+            result["iocs"]["by_type"] = {
+                str(k): int(v) for k, v in df_i[tipo_col].value_counts().items()
+            }
+    except Exception:
+        pass
+
+    return jsonify(result)
+
+
 # ── Config ────────────────────────────────────────────────────────────────────
 _CONFIG_KEYS = {
     "GROQ_API_KEY":       "CRITICAL",

@@ -4,15 +4,16 @@ import Login from './pages/Login'
 import Upload from './pages/Upload'
 import Archive from './pages/Archive'
 import Config from './pages/Config'
+import Dashboard from './pages/Dashboard'
 import Sidebar from './components/Sidebar'
 import Navbar from './components/Navbar'
 
-type Page = 'upload' | 'archive' | 'config'
+type Page = 'dashboard' | 'upload' | 'archive' | 'config'
 
 export default function App() {
   const [user, setUser]       = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [page, setPage]       = useState<Page>('archive')
+  const [page, setPage]       = useState<Page>('dashboard')
   const [pending, setPending] = useState(0)
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <Login onLogin={u => { setUser(u); setPage('archive') }} />
+    return <Login onLogin={u => { setUser(u); setPage('dashboard') }} />
   }
 
   return (
@@ -53,6 +54,7 @@ export default function App() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Navbar page={page} setPage={setPage} user={user} onLogout={logout} pending={pending} />
         <main className="flex-1 overflow-y-auto px-6 py-7">
+          {page === 'dashboard' && <Dashboard />}
           <div className={page !== 'upload' ? 'hidden' : undefined}>
             <Upload />
           </div>

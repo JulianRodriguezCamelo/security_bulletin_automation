@@ -42,6 +42,13 @@ export const api = {
     downloadUrl:   ()              => `${BASE}/archive/download`,
   },
 
+  dashboard: {
+    get: () => req<{
+      threats: { total: number; active: number; by_category: Record<string, number>; by_macro: Record<string, number>; by_status: Record<string, number>; by_month: Record<string, number>; company_impact: number }
+      iocs:    { total: number; by_type: Record<string, number> }
+    }>('GET', '/dashboard'),
+  },
+
   config: {
     get: () => req<{
       keys: Record<string, { severity: string; set: boolean; masked: string }>
