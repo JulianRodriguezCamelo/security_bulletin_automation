@@ -5,10 +5,11 @@ import Dashboard from './pages/Dashboard'
 import Upload from './pages/Upload'
 import Archive from './pages/Archive'
 import Config from './pages/Config'
+import Users from './pages/Users'
 import Sidebar from './components/Sidebar'
 import Navbar from './components/Navbar'
 
-type Page = 'dashboard' | 'upload' | 'archive' | 'config'
+type Page = 'dashboard' | 'upload' | 'archive' | 'config' | 'users'
 
 const IDLE_MS = 20 * 60 * 1000
 
@@ -72,9 +73,9 @@ export default function App() {
     return () => clearInterval(id)
   }, [user])
 
-  // Si cambia de rol y estaba en Config, volver al Dashboard
+  // Si cambia de rol y estaba en una página admin, volver al Dashboard
   useEffect(() => {
-    if (page === 'config' && role !== 'admin') setPage('dashboard')
+    if ((page === 'config' || page === 'users') && role !== 'admin') setPage('dashboard')
   }, [role, page])
 
   const logout = async () => {
@@ -84,7 +85,7 @@ export default function App() {
   }
 
   const handleSetPage = (p: Page) => {
-    if (p === 'config' && role !== 'admin') return
+    if ((p === 'config' || p === 'users') && role !== 'admin') return
     setPage(p)
   }
 
@@ -110,7 +111,8 @@ export default function App() {
           {page === 'upload'    && <Upload />}
           {page === 'archive'   && <Archive />}
           {page === 'config'    && role === 'admin' && <Config />}
-          {page === 'config'    && role !== 'admin' && (
+          {page === 'users'     && role === 'admin' && <Users />}
+          {(page === 'config' || page === 'users') && role !== 'admin' && (
             <div className="flex items-center justify-center h-full text-[#A07080] text-sm">
               Acceso restringido — se requieren permisos de administrador.
             </div>

@@ -1,6 +1,6 @@
 import AlertsBell from './AlertsBell'
 
-type Page = 'dashboard' | 'upload' | 'archive' | 'config'
+type Page = 'dashboard' | 'upload' | 'archive' | 'config' | 'users'
 
 interface Props {
   page:      Page
@@ -11,17 +11,18 @@ interface Props {
   pending:   number
 }
 
-const TABS: { id: Page; icon: string; label: string }[] = [
+const TABS: { id: Page; icon: string; label: string; adminOnly?: boolean }[] = [
   { id: 'dashboard', icon: '📈', label: 'Dashboard'     },
   { id: 'upload',    icon: '📤', label: 'Procesar'      },
   { id: 'archive',   icon: '📊', label: 'Historial'     },
-  { id: 'config',    icon: '⚙️', label: 'Configuración' },
+  { id: 'users',     icon: '👥', label: 'Usuarios',     adminOnly: true },
+  { id: 'config',    icon: '⚙️', label: 'Configuración', adminOnly: true },
 ]
 
 export default function Navbar({ page, setPage, user, role, onLogout, pending }: Props) {
   const now     = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
   const initial = user?.[0]?.toUpperCase() ?? 'U'
-  const visibleTabs = TABS.filter(t => t.id !== 'config' || role === 'admin')
+  const visibleTabs = TABS.filter(t => !t.adminOnly || role === 'admin')
 
   return (
     <header className="bg-surface border-b border-brand-300 shadow-sm">

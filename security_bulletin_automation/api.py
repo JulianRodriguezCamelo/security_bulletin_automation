@@ -50,6 +50,13 @@ MAIN_SCRIPT   = Path(__file__).parent / "main.py"
 
 auth = AuthManager()
 
+# Crea usuario admin por defecto si no hay ningún usuario registrado
+if not auth.has_users():
+    _default_user = os.getenv("DEFAULT_ADMIN_USER", "admin")
+    _default_pass = os.getenv("DEFAULT_ADMIN_PASS", "Admin1234!")
+    auth.create_user(_default_user, _default_pass, role="admin")
+    print(f"[ARGOS] Usuario por defecto creado — user: {_default_user}  pass: {_default_pass}")
+
 _USE_ORACLE  = os.getenv("USE_ORACLE",  "false").lower() == "true"
 _DISABLE_2FA = os.getenv("DISABLE_2FA", "false").lower() == "true"
 
@@ -224,6 +231,26 @@ def create_user():
 
     auth.create_user(username, password, role=role)
     return jsonify({"ok": True, "username": username, "role": role}), 201
+
+
+@app.route("/api/admin/users/<username>", methods=["DELETE"])
+@require_admin
+def delete_user(username):
+    if not auth.user_exists(username):
+        return jsonify({"error": "Usuario no encontrado"}), 404
+    if username == session.get("username"):
+        return jsonify({"error": "No puedes eliminar tu propio usuario"}), 400
+    auth.delete_user(username)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/users/<username>/reset-totp", methods=["POST"])
+@require_admin
+def reset_user_totp(username):
+    if not auth.user_exists(username):
+        return jsonify({"error": "Usuario no encontrado"}), 404
+    auth.reset_totp(username)
+    return jsonify({"ok": True})
 
 
 # ── Files ─────────────────────────────────────────────────────────────────────

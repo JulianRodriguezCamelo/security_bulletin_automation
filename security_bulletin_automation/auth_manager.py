@@ -73,7 +73,31 @@ class AuthManager:
         if self._use_oracle:
             return self._db.list_users()
         users = self._load().get("users", {})
-        return [{"username": u, "role": info.get("role", "user")} for u, info in users.items()]
+        return [
+            {
+                "username": u,
+                "role": info.get("role", "user"),
+                "has_totp": bool(info.get("totp_secret")),
+            }
+            for u, info in users.items()
+        ]
+
+    def delete_user(self, username: str):
+        if self._use_oracle:
+            self._db.delete_user(username)
+        else:
+            data = self._load()
+            data["users"].pop(username, None)
+            self._save(data)
+
+    def reset_totp(self, username: str):
+        if self._use_oracle:
+            self._db.update_totp_secret(username, None)
+        else:
+            data = self._load()
+            if username in data["users"]:
+                data["users"][username]["totp_secret"] = None
+                self._save(data)
 
     def verify_password(self, username: str, password: str) -> bool:
         if self._use_oracle:

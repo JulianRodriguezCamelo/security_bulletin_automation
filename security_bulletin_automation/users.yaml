@@ -1,4 +1,12 @@
 users:
+  admin:
+    password_hash: $2b$12$E6sehsZeaadZMoc2/7eUcu7zZN1.jDHqNeyOGOwPcuhXJ6.I1bNJ2
+    role: admin
+    totp_secret: NHWRDNSHAQS2Y54YHU7BZGFAVDZSLGOF
+  gersito:
+    password_hash: $2b$12$Ma7qnUI8FIn6wgz4Xj8jbuux0OEcIux54CiNDOXFStCSob13nKfyq
+    role: admin
+    totp_secret: null
   julkian:
     password_hash: $2b$12$LfUFU3IM3ebgDUEdnAl.3udgnQY5sn09NiA7O9EOePixVbwQqdwC6
     role: user

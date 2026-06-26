@@ -58,4 +58,11 @@ export const api = {
       report_to: string
     }>('GET', '/config'),
   },
+
+  users: {
+    list:      ()                                           => req<{ username: string; role: string; has_totp: boolean }[]>('GET', '/admin/users'),
+    create:    (username: string, password: string, role: string) => req<{ ok: boolean; username: string; role: string }>('POST', '/admin/users', { username, password, role }),
+    delete:    (username: string)                           => req<{ ok: boolean }>('DELETE', `/admin/users/${encodeURIComponent(username)}`),
+    resetTotp: (username: string)                           => req<{ ok: boolean }>('POST', `/admin/users/${encodeURIComponent(username)}/reset-totp`),
+  },
 }
