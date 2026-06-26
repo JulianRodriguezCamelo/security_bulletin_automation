@@ -1,0 +1,28 @@
+# ── Core ────────────────────────────────────────────────────────────
+flask>=3.0.0
+flask-cors>=4.0.0
+flask-limiter>=3.5.0
+python-dotenv==1.0.1
+werkzeug>=3.0.0
+
+# ── Data / AI ───────────────────────────────────────────────────────
+groq>=0.9.0
+requests==2.31.0
+openpyxl==3.1.2
+pandas==2.2.1
+pdfplumber>=0.10.0
+
+# ── Auth ────────────────────────────────────────────────────────────
+bcrypt>=4.0.0
+pyotp>=2.9.0
+qrcode[pil]>=7.4.2
+pyyaml>=6.0.1
+
+# ── Production server ───────────────────────────────────────────────
+gunicorn>=22.0.0
+
+# ── Oracle 21c (thin mode, sin Oracle Client) ────────────────────────
+oracledb>=2.0.0
+
+# ── Web tech fingerprinting (opcional) ──────────────────────────────
+# wappalyzer

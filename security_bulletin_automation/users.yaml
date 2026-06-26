@@ -1,0 +1,5 @@
+users:
+  julkian:
+    password_hash: $2b$12$LfUFU3IM3ebgDUEdnAl.3udgnQY5sn09NiA7O9EOePixVbwQqdwC6
+    role: user
+    totp_secret: null
