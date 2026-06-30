@@ -17,3 +17,4 @@ data/
 *.eml
 *.log
 .devcontainer/
+frontend/node_modules/
